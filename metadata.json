@@ -1,0 +1,6 @@
+{
+  "name": "battleffx11",
+  "description": "Free Fire Tournament Management Web App with User Dashboard, Wallet, Room ID/Password, and Admin Panel",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
