@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile and wallet",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "format": "email" },
+        "ffUid": { "type": "string", "maxLength": 30 },
+        "ign": { "type": "string", "maxLength": 50 },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "wallet": { "type": "number" }
+      },
+      "required": ["username", "email", "ffUid", "role", "wallet"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Free Fire tournament details",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 150 },
+        "mode": { "type": "string", "enum": ["Solo", "Duo", "Squad", "Clash Squad"] },
+        "map": { "type": "string", "enum": ["Bermuda", "Purgatory", "Kalahari", "NeXTerra"] },
+        "entryFee": { "type": "number" },
+        "prizePool": { "type": "number" },
+        "perKill": { "type": "number" },
+        "totalSlots": { "type": "number" },
+        "filledSlots": { "type": "number" },
+        "startTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["upcoming", "live", "completed"] },
+        "roomId": { "type": "string" },
+        "roomPass": { "type": "string" },
+        "winner": { "type": "string" }
+      },
+      "required": ["title", "mode", "map", "entryFee", "prizePool", "totalSlots", "filledSlots", "startTime", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "User wallet transaction record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["deposit", "withdrawal", "entry_fee", "prize_won"] },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["success", "pending", "failed"] },
+        "reference": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "type", "amount", "status", "reference"]
+    },
+    "JoinedMatch": {
+      "title": "JoinedMatch",
+      "description": "Tournament participation record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "tournamentId": { "type": "string", "maxLength": 128 },
+        "tournamentTitle": { "type": "string", "maxLength": 150 },
+        "ffUid": { "type": "string", "maxLength": 30 },
+        "joinedAt": { "type": "string" }
+      },
+      "required": ["userId", "tournamentId", "tournamentTitle", "ffUid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profile documents"
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": { "$ref": "Tournament" },
+      "description": "Tournament listings"
+    },
+    "/transactions/{txId}": {
+      "schema": { "$ref": "Transaction" },
+      "description": "Wallet transaction records"
+    },
+    "/joinedMatches/{matchId}": {
+      "schema": { "$ref": "JoinedMatch" },
+      "description": "User tournament registrations"
+    }
+  }
+}

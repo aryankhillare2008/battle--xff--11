@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['username', 'email', 'ffUid', 'role', 'wallet']) &&
+             data.keys().hasOnly(['username', 'email', 'ffUid', 'ign', 'role', 'wallet']) &&
+             data.username is string && data.username.size() > 0 && data.username.size() <= 50 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 100 &&
+             data.ffUid is string && data.ffUid.size() > 0 && data.ffUid.size() <= 30 &&
+             data.role is string && (data.role == 'user' || data.role == 'admin') &&
+             data.wallet is number;
+    }
+
+    function isValidTournament(data) {
+      return data.keys().hasAll(['title', 'mode', 'map', 'entryFee', 'prizePool', 'totalSlots', 'filledSlots', 'startTime', 'status']) &&
+             data.keys().hasOnly(['title', 'mode', 'map', 'entryFee', 'prizePool', 'perKill', 'totalSlots', 'filledSlots', 'startTime', 'status', 'roomId', 'roomPass', 'winner']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.mode is string && data.map is string &&
+             data.entryFee is number && data.prizePool is number &&
+             data.totalSlots is number && data.filledSlots is number &&
+             data.startTime is string && data.status is string;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'type', 'amount', 'status', 'reference']) &&
+             data.keys().hasOnly(['userId', 'type', 'amount', 'status', 'reference', 'createdAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.type is string && data.amount is number &&
+             data.status is string && data.reference is string && data.reference.size() <= 100;
+    }
+
+    function isValidJoinedMatch(data) {
+      return data.keys().hasAll(['userId', 'tournamentId', 'tournamentTitle', 'ffUid']) &&
+             data.keys().hasOnly(['userId', 'tournamentId', 'tournamentTitle', 'ffUid', 'teamMembers', 'joinedAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.tournamentId is string && data.tournamentId.size() <= 128 &&
+             data.tournamentTitle is string && data.tournamentTitle.size() <= 150 &&
+             data.ffUid is string && data.ffUid.size() <= 30;
+    }
+
+    // Global Catch-all Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.wallet >= 0;
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /tournaments/{tournamentId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidTournament(request.resource.data);
+    }
+
+    match /transactions/{txId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTransaction(request.resource.data) && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /joinedMatches/{matchId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidJoinedMatch(request.resource.data) && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
